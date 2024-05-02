@@ -1,0 +1,250 @@
+// Adrian Dey | ID = 28069843
+// Desc: user picks one of two games, with rulesets according to gamerules.txt
+
+using System;
+
+namespace games
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            Console.WriteLine("'Sevens Out' or 'Three or More' ?"); // <-- gives user choice between games
+
+            int exit = 0; // <-- sets up loop
+            while (exit <= 0)
+            {
+                Console.WriteLine("1 - Sevens Out"); // <-- choices
+                Console.WriteLine("2 - Three Or More");
+                Console.WriteLine("3 - Exit");
+
+                int choice; // <-- choice variable
+                if (!int.TryParse(Console.ReadLine(), out choice))
+                {
+                    Console.WriteLine("please input a valid number.");
+                    continue;
+                }
+
+                if (choice == 1) // <-- directs user to Sevens Out
+                {
+                    Game sevensOut = new SevensOut();
+                    sevensOut.Play();
+                }
+                else if (choice == 2) // <-- directs user to Three Or More
+                {
+                    Game threeOrMore = new ThreeOrMore();
+                    threeOrMore.Play();
+                }
+                else if (choice == 3) // <-- exits
+                {
+                    exit = 1;
+                }
+                else
+                {
+                    Console.WriteLine("please input a valid option"); // <-- doesn't allow anything other than 1, 2, 3
+                }
+            }
+        }
+    }
+
+    public class Die //< -- die class
+    {
+        private Random random; // <-- allows random dice numbers
+        public Die()
+        {
+            random = new Random();
+        }
+        public int Roll() // <-- rolls for a dice number
+        {
+            return random.Next(1, 7);
+        }
+    }
+
+    public class Game // <-- game class
+    {
+        protected Die die;
+        public Game()
+        {
+            die = new Die();
+        }
+        public virtual void Play() // <-- play method
+        {
+            Console.WriteLine();
+        }
+    }
+
+    public class SevensOut : Game // < -- sevens out
+    {
+        public override void Play() // <-- overrides play method for sevens out
+        {
+            Console.WriteLine("you are playing 'Sevens Out'.");
+            Random random = new Random(); // allows random number for dice roll
+            int score = 0; // <-- score variable
+            bool con = true; // <-- loop condition
+
+            while (con == true)
+            {
+                int dice1 = random.Next(1, 7); // <-- die
+                int dice2 = random.Next(1, 7);
+                int total = dice1 + dice2; // <-- total of die
+
+                Console.WriteLine($"dice 1 = {dice1}, dice 2 = {dice2}, total = {total}");
+                if (total == 7)
+                {
+                    Console.WriteLine("you rolled a 7. you lost."); // <-- if a seven is rolled then user loses
+                    con = false;
+                }
+                else
+                {
+                    score += total; // <-- adds the rolled number into score
+                    con = false;
+
+                    if (dice1 == dice2) // <-- double 
+                    {
+                        score *= 2;
+                        Console.WriteLine($"you rolled a double, total score has been doubled. Score = {score}");
+                        con = false;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"score = {score}"); // <-- no double
+                        con = false;
+                    }
+                }
+            }
+        }
+    }
+
+    public class ThreeOrMore : Game // <-- three or more class
+    {
+        public override void Play() //<-- override method for three or more
+        {
+            Console.WriteLine("You are playing 'Three Or More'.");
+            Random random = new Random(); // <-- allows random number for dice roll
+            int score = 0;
+            int roll = 0;
+
+            while (score < 20)
+            {
+                roll++; // <-- increments rolls
+
+                int[] dice = new int[5]; // <-- rolls 5 die
+                for (int i = 0; i < 5; i++)
+                {
+                    dice[i] = random.Next(1, 7);
+                }
+                Array.Sort(dice); // <-- array in order to implement all the rules of the game
+                Console.WriteLine($"roll {roll}: dice: [{string.Join(", ", dice)}]");
+
+                if (Five(dice)) // <-- five of a kind
+                {
+                    score += 12;
+                    Console.WriteLine("five of a kind. 12 points.");
+
+                }
+                else if (Four(dice)) // <-- four of a kind
+                {
+                    score += 6;
+                    Console.WriteLine("four of a kind. 6 points.");
+                }
+                else if (Three(dice)) // <-- three of a kind
+                {
+                    score += 3;
+                    Console.WriteLine("three of a kind. 3 points.");
+                }
+                else if (Two(dice)) // <-- two of a kind
+                {
+                    Console.WriteLine("two of a kind. rethrow all die (1) or remaining die (2)");
+                    int choice;
+                    while (!int.TryParse(Console.ReadLine(), out choice) || (choice != 1 && choice != 2)) // <-- choice between rethrowing all die or just the none kind ones
+                    {
+                        Console.WriteLine("please select a valid choice.");
+                    }
+                    if (choice == 1)
+                    {
+                        continue; // <-- rethrows all die
+                    }
+                    else if (choice == 2)
+                    {
+                        int[] remainingDie = GetRemainingDie(dice); // <-- only rethrows the none kind die
+                        for (int i = 0; i < remainingDie.Length; i++)
+                        {
+                            remainingDie[i] = random.Next(1, 7);
+                        }
+                        Array.Sort(remainingDie);
+                        Console.WriteLine($"rethrown die: [{string.Join(", ", dice)}]");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("no luck. turn has ended"); // <-- no kind
+                }
+            }
+
+            Console.WriteLine($"score = {score}"); // <-- score
+        }
+
+        static bool Five(int[] dice) // <-- methods to check five, four, three and two of a kind combinations.
+        {
+            return dice[0] == dice[4];
+        }
+
+        static bool Four(int[] dice)
+        {
+            return ((dice[0] == dice[3]) || (dice[1] == dice[4]));
+        }
+
+        static bool Three(int[] dice)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (dice[i] == dice[i + 1] && dice[i + 1] == dice[i + 2])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static bool Two(int[] dice)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (dice[i] == dice[i + 1])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static int[] GetRemainingDie(int[] dice)
+        {
+            int[] remainingDie = new int[5];
+            int index = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                if (dice[i] != dice[i + 1])
+                {
+                    remainingDie[index++] = dice[i];
+                }
+            }
+            remainingDie[index] = dice[4];
+            return remainingDie;
+        }
+    }
+
+    public class Testing
+    {
+        public static void tests()
+        {
+            Die die = new Die();
+
+            Console.WriteLine("rolling die 5 times:"); // <-- tests roll method
+            for (int i = 0; i < 5; i++)
+            {
+                Console.WriteLine($"roll {i + 1}: {die.Roll()}");
+            }
+        }
+    }
+}
